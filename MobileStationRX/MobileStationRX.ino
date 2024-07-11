@@ -99,10 +99,11 @@ void loop()
     if (Serial1.available()){
         Serial1.readBytes(loraData, 8);
         clientPacket["RSSI"] = loraData[7];
-        Serial.println(loraData[6]);
         if (loraData[3] == byte(0xA) && loraData[4] == byte(0xB) 
-        && loraData[5] == byte(0xC) && loraData[6] == byte(0xD)) 
+        && loraData[5] == byte(0xC)) 
             clientPacket["PacketCheck"] = 1;
+
+	clientPacket["PacketId"] = loraData[6];
         ws.textAll(JSON.stringify(clientPacket));
     }
     

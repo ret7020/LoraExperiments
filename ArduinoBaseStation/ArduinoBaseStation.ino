@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include <SoftwareSerial.h>
 
+uint8_t packetId = 0;
 
 SoftwareSerial Lora(2, 3);
 void setup(){
@@ -37,6 +38,8 @@ void loop(){
     Lora.write(byte (0xA));
     Lora.write(byte (0xB));
     Lora.write(byte (0xC));
-    Lora.write(byte (0xD));
+    Lora.write((byte)strtol(String(packetId, HEX).c_str(), NULL, 16));
+    packetId++;
+    if (packetId == 201) packetId = 0;
     delay(2000);
 }

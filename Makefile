@@ -8,4 +8,4 @@ arduinoBaseStation:
 	arduino-cli compile ./ArduinoBaseStation/ArduinoBaseStation.ino --fqbn arduino:avr:nano:cpu=atmega328old --port $(PORT) --upload --verbose
 
 espBaseStation:
-	arduino-cli compile ./ESPBaseStation/firmware/firmware.ino --fqbn esp32:esp32:nodemcu-32s --build-property "build.extra_flags=-DWIFI_SSID=\"$(WIFI_SSID)\" \"-DWIFI_PASS=\"$(WIFI_PASS)\"\"" --port $(PORT) --upload --verbose
+	arduino-cli compile ./ESPBaseStation/firmware/firmware.ino --fqbn esp32:esp32:node32s --build-property "build.extra_flags=-DWIFI_SSID=\"$(WIFI_SSID)\" \"-DWIFI_PASS=\"$(WIFI_PASS)\"\"" --port $(PORT) --upload --verbose

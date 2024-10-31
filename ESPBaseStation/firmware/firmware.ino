@@ -25,21 +25,24 @@ int counter = 0;
 
 // LoRa modulation params
 #define START_FREQ 433E6
+#define START_SF 12
+#define START_BW 31.25E3
+#define DBG_UART_BAUD 115200
 
 AsyncWebServer server(HTTP_PORT);
 AsyncWebSocket ws("/ws");
 JSONVar packetFromSocket;
 
 double bwToInt[10] = {
-    7.8E3, 10.4E3, 15.6E3, 20.8E3, 31.25E3, 41.7E3, 62.5E3, 125E3, 250E3, 500E3
-};
+    7.8E3, 10.4E3, 15.6E3, 20.8E3, 31.25E3, 41.7E3, 62.5E3, 125E3, 250E3, 500E3};
 uint32_t delayBetweenMessages = 1000; // ms
-uint8_t packetCycleCounter = 0;
+uint16_t packetCycleCounter = 0;
 uint8_t txEnabled = 1;
+unsigned long long lastPacketTime = 0;
 
-
-void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
-    packetFromSocket = JSON.parse((char*)data);
+void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
+{
+    packetFromSocket = JSON.parse((char *)data);
 
     /*
     Packet struct
@@ -59,31 +62,34 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     {"action": 1}
     // action == 2 - invert TX enable status (toggle on/off)
     */
-    switch (packetFromSocket["action"]){
-        case 0:
-            LoRa.setSignalBandwidth(bwToInt[packetFromSocket["bw"]]);
-            LoRa.setSpreadingFactor(packetFromSocket["sf"]);
-            LoRa.setCodingRate4(packetFromSocket["cr"]);
-            LoRa.setPreambleLength(packetFromSocket["pl"]);
-            if (packetFromSocket["pl"]) LoRa.enableCrc();
-            else LoRa.disableCrc();
-            LoRa.setTxPower(packetFromSocket["txp"]);
-            delayBetweenMessages = packetFromSocket["dl"];
-            if (packetFromSocket["iq"]) LoRa.enableInvertIQ();
-            else LoRa.disableInvertIQ();
-            
-            break;
-        
-        case 1:
-            packetCycleCounter = 0;
-            break;
+    switch (int(packetFromSocket["action"]))
+    {
+    case 0:
+        LoRa.setSignalBandwidth(bwToInt[packetFromSocket["bw"]]);
+        LoRa.setSpreadingFactor(packetFromSocket["sf"]);
+        LoRa.setCodingRate4(packetFromSocket["cr"]);
+        LoRa.setPreambleLength(packetFromSocket["pl"]);
+        if (packetFromSocket["pl"])
+            LoRa.enableCrc();
+        else
+            LoRa.disableCrc();
+        LoRa.setTxPower(packetFromSocket["txp"]);
+        delayBetweenMessages = packetFromSocket["dl"];
+        if (packetFromSocket["iq"])
+            LoRa.enableInvertIQ();
+        else
+            LoRa.disableInvertIQ();
 
-        case 2:
-            txEnabled = !txEnabled;
-            break;
+        break;
+
+    case 1:
+        packetCycleCounter = 0;
+        break;
+
+    case 2:
+        txEnabled = !txEnabled;
+        break;
     }
-    
-
 }
 
 void websocketEventHandler(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
@@ -93,12 +99,9 @@ void websocketEventHandler(AsyncWebSocket *server, AsyncWebSocketClient *client,
     // else if (type == WS_EVT_CONNECT) Serial.printf("New client\n");
 }
 
-
-
-
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(DBG_UART_BAUD);
 
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASS);
@@ -125,8 +128,8 @@ void setup()
         while (1)
             ;
     }
-    LoRa.setSpreadingFactor(12);
-    LoRa.setSignalBandwidth(125E3);
+    LoRa.setSpreadingFactor(START_SF);
+    LoRa.setSignalBandwidth(START_BW);
     Serial.println("Lora Ready");
 
     // Init top-level http stack
@@ -138,13 +141,18 @@ void setup()
 void loop()
 {
     //  // send packet
-    // LoRa.beginPacket();
-    // LoRa.print(" hello ");
-    // LoRa.print(counter);
-    // LoRa.endPacket();
-    //
-    //  counter++;
-    //
-    // if (delayBetweenMessages)
+    if (txEnabled && (millis() - lastPacketTime > delayBetweenMessages))
+    {
+        char sendBuff[50];
+        sprintf(sendBuff, "Hello: %d", packetCycleCounter);
+        LoRa.beginPacket(true);
+        LoRa.print(" hello ");
+        LoRa.print(counter);
+        LoRa.endPacket();
+        lastPacketTime = millis();
+        packetCycleCounter++;
+        if (packetCycleCounter >= 256) packetCycleCounter = 0;
+        Serial.printf("Packet sent\n");
+    }
     ws.cleanupClients();
 }

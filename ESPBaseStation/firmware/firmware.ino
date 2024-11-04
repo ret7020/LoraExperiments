@@ -25,8 +25,8 @@ int counter = 0;
 
 // LoRa modulation params
 #define START_FREQ 433E6
-#define START_SF 12
-#define START_BW 31.25E3
+#define START_SF 7
+#define START_BW 125E3
 #define DBG_UART_BAUD 115200
 
 AsyncWebServer server(HTTP_PORT);
@@ -128,8 +128,8 @@ void setup()
         while (1)
             ;
     }
-    LoRa.setSpreadingFactor(START_SF);
-    LoRa.setSignalBandwidth(START_BW);
+    //LoRa.setSpreadingFactor(START_SF);
+    //LoRa.setSignalBandwidth(START_BW);
     Serial.println("Lora Ready");
 
     // Init top-level http stack
@@ -145,9 +145,8 @@ void loop()
     {
         char sendBuff[50];
         sprintf(sendBuff, "Hello: %d", packetCycleCounter);
-        LoRa.beginPacket(true);
-        LoRa.print(" hello ");
-        LoRa.print(counter);
+        LoRa.beginPacket();
+        LoRa.print(sendBuff);
         LoRa.endPacket();
         lastPacketTime = millis();
         packetCycleCounter++;

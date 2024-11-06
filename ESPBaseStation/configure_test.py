@@ -7,7 +7,12 @@ ESP_IP = "192.168.1.20"
 def command_waiter():
     while 1:
         cmd = input("cmd")
-        ws.send(json.dumps({"action": 2})),
+        if cmd == "toggle_tx":
+            packet = {"action": 2}
+        elif cmd == "counter_0":
+            packet = {"action": 1}
+
+        ws.send(json.dumps(packet))
 
 
 ws = websocket.WebSocketApp(f"ws://{ESP_IP}/ws",

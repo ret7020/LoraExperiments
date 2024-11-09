@@ -9,3 +9,8 @@ arduinoBaseStation:
 
 espBaseStation:
 	arduino-cli compile ./ESPBaseStation/firmware/firmware.ino --fqbn esp32:esp32:node32s --build-property "build.extra_flags=-DWIFI_SSID=\"$(WIFI_SSID)\" \"-DWIFI_PASS=\"$(WIFI_PASS)\"\"" --port $(PORT) --upload --verbose
+
+espMobile:
+	mkdir -p /tmp/espMobile
+	cp ./MobileStationRX/esp.c /tmp/espMobile/espMobile.ino
+	arduino-cli compile /tmp/espMobile/espMobile.ino --fqbn esp32:esp32:node32s --build-property "build.extra_flags=-DWIFI_SSID=\"$(WIFI_SSID)\" \"-DWIFI_PASS=\"$(WIFI_PASS)\"\"" --port $(PORT) --upload --verbose

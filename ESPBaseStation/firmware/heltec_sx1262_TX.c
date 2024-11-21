@@ -11,7 +11,7 @@
 
 
 byte packet[5] = {255, 200, 145, 90, 35};
-
+byte packetIndex = 0;
 // NSS DIO1 NRST BUSY
 SX1262 radio = new Module(LORA_NSS, LORA_DIO1, LORA_RST, LORA_BUSY);
 
@@ -36,10 +36,13 @@ void setup() {
 }
 
 void loop(){
+  packet[4] = packetIndex;
+  packetIndex++;
   int state = radio.transmit(packet, 5);
   if (state == RADIOLIB_ERR_NONE){
     Serial.println("[SX1262] TX OK");
   }
+  if (packetIndex >= 255) packetIndex = 0;
   delay(1000);
 
 }
